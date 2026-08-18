@@ -1,0 +1,223 @@
+:root {
+  
+  --preto-estadio: #0b0f0d;      
+  --preto-cartao: #121712;       
+  --preto-cartao-hover: #171d17;
+  --verde-copa: #14532d;         
+  --verde-grama: #3f9142;        
+  --verde-grama-hover: #4ba84f;
+  --verde-luz: #8fd19e;          
+  --branco-gelo: #f2f5f1;        
+  --cinza-aco: #8a978d;          
+  --borda-sutil: #243025;
+  --vermelho-alerta: #e5484d;    
+
+  
+  --fonte-destaque: 'Archivo Black', sans-serif; 
+  --fonte-corpo: 'Inter', sans-serif;             
+  --fonte-dados: 'JetBrains Mono', monospace;     
+
+  --raio-padrao: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--preto-estadio);
+  color: var(--branco-gelo);
+  font-family: var(--fonte-corpo);
+  line-height: 1.5;
+  
+  background-image:
+    radial-gradient(circle at 50% -10%, rgba(63, 145, 66, 0.16), transparent 45%),
+    repeating-linear-gradient(
+      transparent,
+      transparent 119px,
+      rgba(242, 245, 241, 0.025) 120px
+    );
+  min-height: 100vh;
+}
+
+a {
+  color: var(--verde-luz);
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fonte-destaque);
+  font-weight: 400; 
+  letter-spacing: 0.01em;
+  margin: 0 0 0.5em 0;
+}
+
+p {
+  margin: 0 0 1em 0;
+  color: var(--cinza-aco);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.pagina {
+  min-height: calc(100vh - 72px);
+  padding: 48px 0;
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--raio-padrao);
+  border: none;
+  font-family: var(--fonte-corpo);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.botao:active {
+  transform: scale(0.98);
+}
+
+.botao-primario {
+  background-color: var(--verde-grama);
+  color: var(--preto-estadio);
+}
+
+.botao-primario:hover {
+  background-color: var(--verde-grama-hover);
+}
+
+.botao-secundario {
+  background-color: transparent;
+  color: var(--branco-gelo);
+  border: 1px solid var(--borda-sutil);
+}
+
+.botao-secundario:hover {
+  border-color: var(--verde-grama);
+  color: var(--verde-luz);
+}
+
+.botao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.botao-bloco {
+  width: 100%;
+}
+
+.cartao {
+  background-color: var(--preto-cartao);
+  border: 1px solid var(--borda-sutil);
+  border-radius: var(--raio-padrao);
+  padding: 24px;
+}
+
+.campo {
+  margin-bottom: 18px;
+}
+
+.campo label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cinza-aco);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  background-color: var(--preto-estadio);
+  border: 1px solid var(--borda-sutil);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--branco-gelo);
+  font-family: var(--fonte-corpo);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  border-color: var(--verde-grama);
+  box-shadow: 0 0 0 3px rgba(63, 145, 66, 0.25);
+}
+
+.campo textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.mensagem-erro {
+  background-color: rgba(229, 72, 77, 0.12);
+  border: 1px solid rgba(229, 72, 77, 0.4);
+  color: #ff9a9d;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 18px;
+}
+
+.mensagem-sucesso {
+  background-color: rgba(63, 145, 66, 0.14);
+  border: 1px solid rgba(63, 145, 66, 0.4);
+  color: var(--verde-luz);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 18px;
+}
+
+.numero-camisa {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--verde-copa);
+  border: 2px solid var(--verde-grama);
+  color: var(--branco-gelo);
+  font-family: var(--fonte-destaque);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--verde-luz);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

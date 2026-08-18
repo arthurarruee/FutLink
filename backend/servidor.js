@@ -1,0 +1,31 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { conectarBanco } = require('./configuracao/banco');
+const autenticacaoRotas = require('./rotas/autenticacaoRotas');
+const usuarioRotas = require('./rotas/usuarioRotas');
+const perfilAtletaRotas = require('./rotas/perfilAtletaRotas');
+const perfilEmpresarioRotas = require('./rotas/perfilEmpresarioRotas');
+const portfolioRotas = require('./rotas/portfolioRotas');
+const interesseRotas = require('./rotas/interesseRotas');
+const matchRotas = require('./rotas/matchRotas');
+const mensagemRotas = require('./rotas/mensagemRotas');
+conectarBanco();
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.get('/', (req, res) => {
+    res.json({ mensagem: 'API do FutLink está rodando 🚀' });
+});
+app.use('/api/auth', autenticacaoRotas);
+app.use('/api/usuarios', usuarioRotas);
+app.use('/api/perfil-atleta', perfilAtletaRotas);
+app.use('/api/perfil-empresario', perfilEmpresarioRotas);
+app.use('/api/portfolio', portfolioRotas);
+app.use('/api/interesses', interesseRotas);
+app.use('/api/matches', matchRotas);
+app.use('/api/mensagens', mensagemRotas);
+const PORTA = process.env.PORT || 5000;
+app.listen(PORTA, () => {
+    console.log(`✅ Servidor rodando na porta ${PORTA}`);
+});
