@@ -74,7 +74,7 @@ export default function PerfilAtletaVisualizacao() {
     }
     const nome = perfil.Usuario?.nome || 'Atleta';
     const times = historico.filter((item) => item.tipo === 'time');
-    const competicoes = historico.filter((item) => item.tipo === 'competicao');
+    const competicoesHistorico = historico.filter((item) => item.tipo === 'competicao');
     return (<div className="pagina">
       <div className="container container-estreito">
         <Link to="/pesquisa" className="link-voltar">
