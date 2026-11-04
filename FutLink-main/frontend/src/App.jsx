@@ -11,6 +11,7 @@ import PerfilAtletaVisualizacao from './paginas/PerfilAtletaVisualizacao';
 import Feed from './paginas/Feed';
 import Interesses from './paginas/Interesses';
 import Mensagens from './paginas/Mensagens';
+import NaoEncontrada from './paginas/NaoEncontrada';
 
 export default function App() {
     return (<BrowserRouter>
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/mensagens" element={<RotaProtegida>
                 <Mensagens />
               </RotaProtegida>}/>
+          <Route path="*" element={<NaoEncontrada />}/>
         </Routes>
       </AutenticacaoProvedor>
     </BrowserRouter>);

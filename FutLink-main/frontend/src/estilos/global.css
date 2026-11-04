@@ -221,3 +221,107 @@ select:focus-visible {
     animation: none !important;
   }
 }
+
+
+/* ---------- Estados de tela (carregando / vazio / erro) ---------- */
+.estado-carregando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: var(--cinza-aco);
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--borda-sutil);
+  border-top-color: var(--verde-grama);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.estado-centro {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.estado-centro h2,
+.estado-centro h3 {
+  color: var(--branco-gelo);
+}
+
+.estado-centro p:last-child {
+  margin-bottom: 0;
+}
+
+.estado-acoes {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.botao-link-erro {
+  margin-left: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--branco-gelo);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dica-campo {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--cinza-aco);
+}
+
+/* ---------- Acabamento visual ---------- */
+.botao-primario:hover {
+  box-shadow: 0 6px 18px rgba(63, 145, 66, 0.28);
+}
+
+.cartao {
+  box-shadow: 0 1px 0 rgba(242, 245, 241, 0.03) inset;
+}
+
+::selection {
+  background: rgba(63, 145, 66, 0.4);
+}
+
+textarea:focus-visible {
+  outline: 2px solid var(--verde-luz);
+  outline-offset: 2px;
+}
+
+/* ---------- Responsividade geral ---------- */
+img,
+svg {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 16px;
+  }
+  .pagina {
+    padding: 28px 0;
+  }
+  .cartao {
+    padding: 18px;
+  }
+  .pagina-inicio-acoes {
+    flex-wrap: wrap;
+  }
+}

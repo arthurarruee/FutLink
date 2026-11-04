@@ -5,11 +5,23 @@ export function AutenticacaoProvedor({ children }) {
     const [usuario, setUsuario] = useState(null);
     const [carregando, setCarregando] = useState(true);
     useEffect(() => {
-        const usuarioSalvo = localStorage.getItem('futlink_usuario');
-        if (usuarioSalvo) {
-            setUsuario(JSON.parse(usuarioSalvo));
+        // JSON.parse pode falhar se o localStorage tiver sido alterado/corrompido;
+        // sem o try/catch isso derrubaria o app inteiro (tela em branco).
+        try {
+            const usuarioSalvo = localStorage.getItem('futlink_usuario');
+            if (usuarioSalvo && localStorage.getItem('futlink_token')) {
+                setUsuario(JSON.parse(usuarioSalvo));
+            }
+        }
+        catch {
+            localStorage.removeItem('futlink_usuario');
+            localStorage.removeItem('futlink_token');
         }
         setCarregando(false);
+        // Quando o api.js detecta token vencido, ele dispara este evento.
+        const aoExpirar = () => setUsuario(null);
+        window.addEventListener('futlink:sessao-expirada', aoExpirar);
+        return () => window.removeEventListener('futlink:sessao-expirada', aoExpirar);
     }, []);
     const entrar = async (email, senha) => {
         const resposta = await api.post('/auth/login', { email, senha });

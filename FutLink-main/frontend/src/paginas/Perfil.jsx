@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../servicos/api';
+import api, { mensagemDeErro } from '../servicos/api';
+import { Carregando, MensagemErro } from '../componentes/Estados';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import HistoricoClubesSecao from '../componentes/HistoricoClubesSecao';
 import HistoricoCompeticoesSecao from '../componentes/HistoricoCompeticoesSecao';
@@ -46,7 +47,7 @@ export default function Perfil() {
         setDados((atual) => ({ ...atual, ...resposta.data }));
       } catch (erroRequisicao) {
         if (erroRequisicao.response?.status !== 404) {
-          setErro('Não foi possível carregar seu perfil.');
+          setErro(mensagemDeErro(erroRequisicao, 'Não foi possível carregar seu perfil.'));
         }
       } finally {
         setCarregando(false);
@@ -72,11 +73,13 @@ export default function Perfil() {
       await api.put('/usuarios/me', conta);
       atualizarUsuario(conta);
 
-      await api.put(rotaBase, dados);
+      const camposEditaveis = Object.keys(ehAtleta ? CAMPOS_VAZIOS_ATLETA : CAMPOS_VAZIOS_EMPRESARIO);
+      const corpo = Object.fromEntries(camposEditaveis.map((campo) => [campo, dados[campo] ?? '']));
+      await api.put(rotaBase, corpo);
 
       setMensagem('Dados salvos com sucesso!');
     } catch (erroRequisicao) {
-      setErro(erroRequisicao.response?.data?.mensagem || 'Não foi possível salvar seus dados.');
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível salvar seus dados.'));
     } finally {
       setSalvando(false);
     }
@@ -94,7 +97,7 @@ export default function Perfil() {
       sair();
       navegar('/');
     } catch (erroRequisicao) {
-      setErro(erroRequisicao.response?.data?.mensagem || 'Não foi possível excluir sua conta.');
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível excluir sua conta.'));
       setExcluindo(false);
     }
   };
@@ -102,7 +105,9 @@ export default function Perfil() {
   if (carregando) {
     return (
       <div className="pagina">
-        <div className="container">Carregando...</div>
+        <div className="container">
+          <Carregando texto="Carregando seu perfil..."/>
+        </div>
       </div>
     );
   }
@@ -119,8 +124,8 @@ export default function Perfil() {
         </p>
 
         <form className="cartao" onSubmit={aoSalvar}>
-          {mensagem && <div className="mensagem-sucesso">{mensagem}</div>}
-          {erro && <div className="mensagem-erro">{erro}</div>}
+          {mensagem && <div className="mensagem-sucesso" role="status">{mensagem}</div>}
+          <MensagemErro texto={erro}/>
 
           <h3 className="titulo-secao">Dados da conta</h3>
           <div className="grade-2">

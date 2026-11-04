@@ -1,4 +1,5 @@
 const { HistoricoClube } = require('../modelos');
+const { limparTexto } = require('../utilitarios/validacao');
 
 const adicionarClube = async (req, res) => {
   try {
@@ -6,9 +7,24 @@ const adicionarClube = async (req, res) => {
       return res.status(403).json({ mensagem: 'Só atletas podem adicionar clubes ao histórico.' });
     }
 
-    const { nomeClube, categoria, cidade, estado, anoInicio, anoFim, descricao } = req.body;
+    const nomeClube = limparTexto(req.body.nomeClube);
+    const categoria = limparTexto(req.body.categoria);
+    const cidade = limparTexto(req.body.cidade);
+    const estado = limparTexto(req.body.estado)?.toUpperCase() ?? null;
+    const anoInicio = limparTexto(req.body.anoInicio);
+    const anoFim = limparTexto(req.body.anoFim);
+    const descricao = limparTexto(req.body.descricao);
     if (!nomeClube) {
       return res.status(400).json({ mensagem: 'Informe o nome do clube.' });
+    }
+    if (nomeClube.length > 255) {
+      return res.status(400).json({ mensagem: 'O nome do clube está longo demais.' });
+    }
+    if (estado && !/^[A-Z]{2}$/.test(estado)) {
+      return res.status(400).json({ mensagem: 'Use a sigla do estado com 2 letras (ex.: RS).' });
+    }
+    if (descricao && descricao.length > 300) {
+      return res.status(400).json({ mensagem: 'A descrição pode ter no máximo 300 caracteres.' });
     }
 
     const item = await HistoricoClube.create({
@@ -24,7 +40,8 @@ const adicionarClube = async (req, res) => {
 
     res.status(201).json({ mensagem: 'Clube adicionado ao histórico!', item });
   } catch (erro) {
-    res.status(500).json({ mensagem: 'Erro ao adicionar clube.', erro: erro.message });
+    console.error(erro);
+    res.status(500).json({ mensagem: 'Erro ao adicionar clube.' });
   }
 };
 

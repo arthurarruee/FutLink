@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import api from '../servicos/api';
+import api, { mensagemDeErro } from '../servicos/api';
+import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
 import { extrairIdYoutube } from '../servicos/youtube';
 
 export default function Feed() {
@@ -15,8 +16,8 @@ export default function Feed() {
     try {
       const resposta = await api.get('/portfolio/me');
       setVideos(resposta.data);
-    } catch {
-      setErro('Não foi possível carregar seu portfólio.');
+    } catch (erroRequisicao) {
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível carregar seu portfólio.'));
     } finally {
       setCarregando(false);
     }
@@ -42,15 +43,20 @@ export default function Feed() {
       setTitulo('');
       carregarVideos();
     } catch (erroRequisicao) {
-      setErro(erroRequisicao.response?.data?.mensagem || 'Não foi possível adicionar o vídeo.');
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível adicionar o vídeo.'));
     } finally {
       setEnviando(false);
     }
   };
 
   const aoExcluir = async (id) => {
-    await api.delete(`/portfolio/${id}`);
-    setVideos((atual) => atual.filter((video) => video.id !== id));
+    if (!window.confirm('Remover este vídeo do seu portfólio?')) return;
+    try {
+      await api.delete(`/portfolio/${id}`);
+      setVideos((atual) => atual.filter((video) => video.id !== id));
+    } catch (erroRequisicao) {
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível remover o vídeo.'));
+    }
   };
 
   return (
@@ -63,7 +69,7 @@ export default function Feed() {
         </p>
 
         <form className="cartao" onSubmit={aoAdicionar}>
-          {erro && <div className="mensagem-erro">{erro}</div>}
+          <MensagemErro texto={erro}/>
           <div className="campo">
             <label htmlFor="urlVideo">Link do vídeo (YouTube)</label>
             <input
@@ -88,9 +94,9 @@ export default function Feed() {
         </form>
 
         {carregando ? (
-          <p>Carregando...</p>
+          <Carregando texto="Carregando portfólio..."/>
         ) : videos.length === 0 ? (
-          <p>Você ainda não adicionou nenhum vídeo.</p>
+          <EstadoVazio titulo="Seu portfólio está vazio" texto="Adicione o primeiro vídeo do YouTube acima para empresários verem você jogar."/>
         ) : (
           <div className="grade-feed">
             {videos.map((video) => {
@@ -108,7 +114,7 @@ export default function Feed() {
                     <a href={video.urlVideo} target="_blank" rel="noreferrer">
                       Assistir no YouTube ↗
                     </a>
-                    <button className="botao botao-secundario" onClick={() => aoExcluir(video.id)}>
+                    <button type="button" className="botao botao-secundario" onClick={() => aoExcluir(video.id)}>
                       Excluir
                     </button>
                   </div>
@@ -120,6 +126,7 @@ export default function Feed() {
       </div>
 
       <style>{`
+        .cartao-video img { aspect-ratio: 16 / 9; object-fit: cover; }
         .grade-feed {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

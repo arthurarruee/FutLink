@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import api from '../servicos/api';
+import api, { mensagemDeErro } from '../servicos/api';
+import { Carregando, MensagemErro } from '../componentes/Estados';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { IconeOlho } from '../componentes/Icones';
 
@@ -15,6 +16,8 @@ export default function Mensagens() {
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState('');
   const [carregandoMatches, setCarregandoMatches] = useState(true);
+  const [erro, setErro] = useState('');
+  const [enviando, setEnviando] = useState(false);
   const fimDaConversaRef = useRef(null);
 
   useEffect(() => {
@@ -22,6 +25,8 @@ export default function Mensagens() {
       try {
         const resposta = await api.get('/matches');
         setMatches(resposta.data);
+      } catch (erroRequisicao) {
+        setErro(mensagemDeErro(erroRequisicao, 'Não foi possível carregar suas conversas.'));
       } finally {
         setCarregandoMatches(false);
       }
@@ -31,9 +36,15 @@ export default function Mensagens() {
 
   const abrirConversa = async (match) => {
     setMatchSelecionado(match);
+    setErro('');
+    setMensagens([]);
     const outraPessoa = ehAtleta ? match.Empresario : match.Atleta;
-    const resposta = await api.get(`/mensagens/${outraPessoa.id}`);
-    setMensagens(resposta.data);
+    try {
+      const resposta = await api.get(`/mensagens/${outraPessoa.id}`);
+      setMensagens(resposta.data);
+    } catch (erroRequisicao) {
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível carregar a conversa.'));
+    }
   };
 
   // Quando chega em /mensagens?com=<usuarioId> (vindo do perfil ou da aba interesses),
@@ -59,9 +70,18 @@ export default function Mensagens() {
     if (!texto.trim() || !matchSelecionado) return;
 
     const outraPessoa = ehAtleta ? matchSelecionado.Empresario : matchSelecionado.Atleta;
-    const resposta = await api.post('/mensagens', { destinatarioId: outraPessoa.id, conteudo: texto });
-    setMensagens((atual) => [...atual, resposta.data]);
-    setTexto('');
+    setErro('');
+    setEnviando(true);
+    try {
+      const resposta = await api.post('/mensagens', { destinatarioId: outraPessoa.id, conteudo: texto });
+      setMensagens((atual) => [...atual, resposta.data]);
+      setTexto('');
+    } catch (erroRequisicao) {
+      // O texto continua no campo para a pessoa não perder o que escreveu.
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível enviar a mensagem.'));
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const outraPessoaSelecionada = matchSelecionado ? (ehAtleta ? matchSelecionado.Empresario : matchSelecionado.Atleta) : null;
@@ -71,11 +91,12 @@ export default function Mensagens() {
       <div className="container">
         <p className="eyebrow-auth">Conversas</p>
         <h2>Mensagens</h2>
+        <MensagemErro texto={erro}/>
 
         <div className="area-mensagens">
           <aside className="lista-conversas cartao">
             {carregandoMatches ? (
-              <p>Carregando...</p>
+              <Carregando/>
             ) : matches.length === 0 ? (
               <p className="texto-vazio">
                 Você ainda não tem matches. {ehAtleta ? 'Aceite um interesse' : 'Envie um interesse e espere aceitarem'}{' '}
@@ -138,10 +159,11 @@ export default function Mensagens() {
                 <form className="formulario-chat" onSubmit={enviar}>
                   <input
                     placeholder="Escreva uma mensagem..."
+                    maxLength={1000}
                     value={texto}
                     onChange={(e) => setTexto(e.target.value)}
                   />
-                  <button className="botao botao-primario">Enviar</button>
+                  <button className="botao botao-primario" disabled={enviando || !texto.trim()}>{enviando ? 'Enviando...' : 'Enviar'}</button>
                 </form>
               </>
             )}
@@ -150,6 +172,11 @@ export default function Mensagens() {
       </div>
 
       <style>{`
+        @media (max-width: 720px) {
+          .area-mensagens { grid-template-columns: 1fr !important; height: auto !important; }
+          .lista-conversas { max-height: 200px; }
+          .janela-chat { min-height: 420px; }
+        }
         .area-mensagens {
           display: grid;
           grid-template-columns: 280px 1fr;

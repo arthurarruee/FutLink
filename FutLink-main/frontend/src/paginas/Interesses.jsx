@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../servicos/api';
+import api, { mensagemDeErro } from '../servicos/api';
+import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { IconeChat, IconeOlho } from '../componentes/Icones';
 
@@ -20,13 +21,17 @@ export default function Interesses() {
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [erro, setErro] = useState('');
 
   const carregar = async () => {
     setCarregando(true);
+    setErro('');
     try {
       const rota = ehAtleta ? '/interesses/recebidos' : '/interesses/enviados';
       const resposta = await api.get(rota);
       setInteresses(resposta.data);
+    } catch (erroRequisicao) {
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível carregar seus interesses.'));
     } finally {
       setCarregando(false);
     }
@@ -44,7 +49,7 @@ export default function Interesses() {
       setMensagem(decisao === 'aceitar' ? 'Interesse aceito! Vocês já podem conversar.' : 'Interesse recusado.');
       carregar();
     } catch (erroRequisicao) {
-      setMensagem(erroRequisicao.response?.data?.mensagem || 'Não foi possível responder.');
+      setMensagem(mensagemDeErro(erroRequisicao, 'Não foi possível responder.'));
     }
   };
 
@@ -77,12 +82,13 @@ export default function Interesses() {
           </div>
         )}
 
-        {mensagem && <div className="mensagem-sucesso">{mensagem}</div>}
+        {mensagem && <div className="mensagem-sucesso" role="status">{mensagem}</div>}
+        <MensagemErro texto={erro} aoTentarNovamente={carregar}/>
 
         {carregando ? (
-          <p>Carregando...</p>
-        ) : interessesOrdenados.length === 0 ? (
-          <p>{ehAtleta ? 'Nenhum interesse recebido ainda.' : 'Você ainda não enviou interesse a nenhum atleta.'}</p>
+          <Carregando texto="Carregando interesses..."/>
+        ) : interessesOrdenados.length === 0 && !erro ? (
+          <EstadoVazio titulo={ehAtleta ? 'Nenhum interesse recebido ainda' : 'Nenhum interesse enviado'} texto={ehAtleta ? 'Complete seu perfil e adicione vídeos para ser encontrado por empresários.' : 'Pesquise atletas e envie interesse pelo perfil deles.'}/>
         ) : (
           <div className="lista-interesses">
             {interessesOrdenados.map((interesse) => {
@@ -129,10 +135,10 @@ export default function Interesses() {
 
                   {ehAtleta && interesse.status === 'pendente' ? (
                     <div className="cartao-interesse-acoes">
-                      <button className="botao botao-primario" onClick={() => responder(interesse.id, 'aceitar')}>
+                      <button type="button" className="botao botao-primario" onClick={() => responder(interesse.id, 'aceitar')}>
                         Aceitar
                       </button>
-                      <button className="botao botao-secundario" onClick={() => responder(interesse.id, 'recusar')}>
+                      <button type="button" className="botao botao-secundario" onClick={() => responder(interesse.id, 'recusar')}>
                         Recusar
                       </button>
                     </div>

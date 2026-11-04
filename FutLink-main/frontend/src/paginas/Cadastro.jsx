@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
+import { mensagemDeErro } from '../servicos/api';
 export default function Cadastro() {
     const { registrar } = useAutenticacao();
     const navegar = useNavigate();
@@ -19,7 +20,7 @@ export default function Cadastro() {
             navegar('/perfil');
         }
         catch (erroRequisicao) {
-            setErro(erroRequisicao.response?.data?.mensagem || 'Não foi possível criar sua conta.');
+            setErro(mensagemDeErro(erroRequisicao, 'Não foi possível criar sua conta.'));
         }
         finally {
             setEnviando(false);
@@ -31,7 +32,7 @@ export default function Cadastro() {
           <p className="eyebrow-auth">Comece agora</p>
           <h2>Criar conta</h2>
 
-          {erro && <div className="mensagem-erro">{erro}</div>}
+          {erro && <div className="mensagem-erro" role="alert">{erro}</div>}
 
           <div className="campo">
             <label>Eu sou</label>
@@ -52,12 +53,13 @@ export default function Cadastro() {
 
           <div className="campo">
             <label htmlFor="email">E-mail</label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
+            <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
           </div>
 
           <div className="campo">
             <label htmlFor="senha">Senha</label>
-            <input id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} minLength={6} required/>
+            <input id="senha" type="password" autoComplete="new-password" value={senha} onChange={(e) => setSenha(e.target.value)} minLength={6} required/>
+            <small className="dica-campo">Mínimo de 6 caracteres.</small>
           </div>
 
           <button className="botao botao-primario botao-bloco" disabled={enviando}>

@@ -1,14 +1,27 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Usuario } = require('../modelos');
+const { ehEmailValido } = require('../utilitarios/validacao');
 const gerarToken = (usuario) => {
     return jwt.sign({ id: usuario.id, tipo: usuario.tipo }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 const registrar = async (req, res) => {
     try {
-        const { nome, email, senha, tipo } = req.body;
+        const { senha, tipo } = req.body;
+        // trim() tira espaços sem querer; e-mail em minúsculas evita contas "duplicadas" por maiúsculas.
+        const nome = String(req.body.nome || '').trim();
+        const email = String(req.body.email || '').trim().toLowerCase();
         if (!nome || !email || !senha || !tipo) {
             return res.status(400).json({ mensagem: 'Preencha todos os campos obrigatórios.' });
+        }
+        if (!ehEmailValido(email)) {
+            return res.status(400).json({ mensagem: 'Informe um e-mail válido.' });
+        }
+        if (String(senha).length < 6) {
+            return res.status(400).json({ mensagem: 'A senha precisa ter pelo menos 6 caracteres.' });
+        }
+        if (!['atleta', 'empresario'].includes(tipo)) {
+            return res.status(400).json({ mensagem: 'Tipo de conta inválido.' });
         }
         const usuarioExiste = await Usuario.findOne({ where: { email } });
         if (usuarioExiste) {
@@ -35,12 +48,14 @@ const registrar = async (req, res) => {
         });
     }
     catch (erro) {
-        res.status(500).json({ mensagem: 'Erro ao cadastrar usuário.', erro: erro.message });
+      console.error(erro);
+        res.status(500).json({ mensagem: 'Erro ao cadastrar usuário.' });
     }
 };
 const login = async (req, res) => {
     try {
-        const { email, senha } = req.body;
+        const email = String(req.body.email || '').trim();
+        const { senha } = req.body;
         if (!email || !senha) {
             return res.status(400).json({ mensagem: 'Informe e-mail e senha.' });
         }
@@ -65,7 +80,8 @@ const login = async (req, res) => {
         });
     }
     catch (erro) {
-        res.status(500).json({ mensagem: 'Erro ao fazer login.', erro: erro.message });
+      console.error(erro);
+        res.status(500).json({ mensagem: 'Erro ao fazer login.' });
     }
 };
 module.exports = { registrar, login };

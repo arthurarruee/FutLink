@@ -15,9 +15,13 @@ const existeMatchEntre = async (usuarioAId, usuarioBId) => {
 
 const enviarMensagem = async (req, res) => {
   try {
-    const { destinatarioId, conteudo } = req.body;
+    const { destinatarioId } = req.body;
+    const conteudo = String(req.body.conteudo || '').trim();
     if (!destinatarioId || !conteudo) {
       return res.status(400).json({ mensagem: 'Informe o destinatário e o conteúdo da mensagem.' });
+    }
+    if (conteudo.length > 1000) {
+      return res.status(400).json({ mensagem: 'A mensagem pode ter no máximo 1000 caracteres.' });
     }
 
     const podeConversar = await existeMatchEntre(req.usuario.id, destinatarioId);
@@ -33,7 +37,8 @@ const enviarMensagem = async (req, res) => {
 
     res.status(201).json(mensagem);
   } catch (erro) {
-    res.status(500).json({ mensagem: 'Erro ao enviar mensagem.', erro: erro.message });
+    console.error(erro);
+    res.status(500).json({ mensagem: 'Erro ao enviar mensagem.' });
   }
 };
 

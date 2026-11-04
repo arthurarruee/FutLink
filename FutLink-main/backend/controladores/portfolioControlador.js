@@ -1,4 +1,5 @@
 const { Portfolio } = require('../modelos');
+const { limparTexto, ehLinkYoutubeValido } = require('../utilitarios/validacao');
 
 const adicionarVideo = async (req, res) => {
   try {
@@ -6,15 +7,23 @@ const adicionarVideo = async (req, res) => {
       return res.status(403).json({ mensagem: 'Só atletas podem adicionar vídeos ao portfólio.' });
     }
 
-    const { urlVideo, titulo } = req.body;
+    const urlVideo = limparTexto(req.body.urlVideo);
+    const titulo = limparTexto(req.body.titulo);
     if (!urlVideo) {
       return res.status(400).json({ mensagem: 'Informe a URL do vídeo do YouTube.' });
+    }
+    if (!ehLinkYoutubeValido(urlVideo)) {
+      return res.status(400).json({ mensagem: 'Cole um link válido de vídeo do YouTube.' });
+    }
+    if ((titulo && titulo.length > 255) || urlVideo.length > 255) {
+      return res.status(400).json({ mensagem: 'Título ou link longo demais (máximo 255 caracteres).' });
     }
 
     const video = await Portfolio.create({ usuarioId: req.usuario.id, urlVideo, titulo });
     res.status(201).json({ mensagem: 'Vídeo adicionado ao portfólio!', video });
   } catch (erro) {
-    res.status(500).json({ mensagem: 'Erro ao adicionar vídeo.', erro: erro.message });
+    console.error(erro);
+    res.status(500).json({ mensagem: 'Erro ao adicionar vídeo.' });
   }
 };
 
@@ -26,11 +35,15 @@ const editarVideo = async (req, res) => {
     }
 
     const { urlVideo, titulo } = req.body;
+    if (urlVideo !== undefined && !ehLinkYoutubeValido(urlVideo)) {
+      return res.status(400).json({ mensagem: 'Cole um link válido de vídeo do YouTube.' });
+    }
     await video.update({ urlVideo: urlVideo ?? video.urlVideo, titulo: titulo ?? video.titulo });
 
     res.json({ mensagem: 'Vídeo atualizado!', video });
   } catch (erro) {
-    res.status(500).json({ mensagem: 'Erro ao editar vídeo.', erro: erro.message });
+    console.error(erro);
+    res.status(500).json({ mensagem: 'Erro ao editar vídeo.' });
   }
 };
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../servicos/api';
+import api, { mensagemDeErro } from '../servicos/api';
 import { IconeTime } from './Icones';
 
 const CAMPOS_VAZIOS = { nomeClube: '', categoria: '', cidade: '', estado: '', anoInicio: '', anoFim: '', descricao: '' };
@@ -45,15 +45,20 @@ export default function HistoricoClubesSecao() {
       setNovoItem(CAMPOS_VAZIOS);
       carregar();
     } catch (erroRequisicao) {
-      setErro(erroRequisicao.response?.data?.mensagem || 'Não foi possível adicionar esse clube.');
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível adicionar esse clube.'));
     } finally {
       setEnviando(false);
     }
   };
 
   const aoExcluir = async (id) => {
-    await api.delete(`/historico-clubes/${id}`);
-    setItens((atual) => atual.filter((item) => item.id !== id));
+    if (!window.confirm('Remover este item do seu histórico?')) return;
+    try {
+      await api.delete(`/historico-clubes/${id}`);
+      setItens((atual) => atual.filter((item) => item.id !== id));
+    } catch (erroRequisicao) {
+      setErro(mensagemDeErro(erroRequisicao, 'Não foi possível remover este item.'));
+    }
   };
 
   return (

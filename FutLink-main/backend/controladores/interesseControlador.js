@@ -24,7 +24,8 @@ const enviarInteresse = async (req, res) => {
     const interesse = await Interesse.create({ atletaId, empresarioId: req.usuario.id });
     res.status(201).json({ mensagem: 'Interesse enviado!', interesse });
   } catch (erro) {
-    res.status(500).json({ mensagem: 'Erro ao enviar interesse.', erro: erro.message });
+    console.error(erro);
+    res.status(500).json({ mensagem: 'Erro ao enviar interesse.' });
   }
 };
 
@@ -71,7 +72,8 @@ const aceitarInteresse = async (req, res) => {
 
     res.json({ mensagem: 'Interesse aceito! Vocês agora têm um match.' });
   } catch (erro) {
-    res.status(500).json({ mensagem: 'Erro ao aceitar interesse.', erro: erro.message });
+    console.error(erro);
+    res.status(500).json({ mensagem: 'Erro ao aceitar interesse.' });
   }
 };
 

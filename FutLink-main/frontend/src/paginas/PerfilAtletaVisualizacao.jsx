@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../servicos/api';
+import api, { mensagemDeErro } from '../servicos/api';
+import { Carregando, MensagemErro } from '../componentes/Estados';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { extrairIdYoutube } from '../servicos/youtube';
 import { IconeChat, IconeTime, IconeTaca } from '../componentes/Icones';
@@ -14,6 +15,7 @@ export default function PerfilAtletaVisualizacao() {
     const [competicoes, setCompeticoes] = useState([]);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState('');
+    const [erroInteresse, setErroInteresse] = useState('');
     const [statusInteresse, setStatusInteresse] = useState(null);
     const [enviandoInteresse, setEnviandoInteresse] = useState(false);
     useEffect(() => {
@@ -23,7 +25,9 @@ export default function PerfilAtletaVisualizacao() {
                 setPerfil(resposta.data);
             }
             catch (erroRequisicao) {
-                setErro('Não foi possível carregar esse perfil.');
+                setErro(erroRequisicao.response?.status === 404
+                    ? 'Esse atleta ainda não preencheu o perfil.'
+                    : mensagemDeErro(erroRequisicao, 'Não foi possível carregar esse perfil.'));
             }
             finally {
                 setCarregando(false);
@@ -53,13 +57,14 @@ export default function PerfilAtletaVisualizacao() {
             .catch(() => setStatusInteresse(null));
     }, [usuarioId, usuario.tipo]);
     const enviarInteresse = async () => {
+        setErroInteresse('');
         setEnviandoInteresse(true);
         try {
             await api.post('/interesses', { atletaId: usuarioId });
             setStatusInteresse('pendente');
         }
         catch (erroRequisicao) {
-            setErro(erroRequisicao.response?.data?.mensagem || 'Não foi possível enviar interesse.');
+            setErroInteresse(mensagemDeErro(erroRequisicao, 'Não foi possível enviar interesse.'));
         }
         finally {
             setEnviandoInteresse(false);
@@ -67,13 +72,15 @@ export default function PerfilAtletaVisualizacao() {
     };
     if (carregando) {
         return (<div className="pagina">
-        <div className="container">Carregando...</div>
+        <div className="container">
+          <Carregando texto="Carregando perfil..."/>
+        </div>
       </div>);
     }
     if (erro || !perfil) {
         return (<div className="pagina">
         <div className="container">
-          <div className="mensagem-erro">{erro || 'Perfil não encontrado.'}</div>
+          <MensagemErro texto={erro || 'Perfil não encontrado.'}/>
           <Link to="/pesquisa" className="botao botao-secundario">
             Voltar para a pesquisa
           </Link>
@@ -86,6 +93,8 @@ export default function PerfilAtletaVisualizacao() {
         <Link to="/pesquisa" className="link-voltar">
           ← Voltar para a pesquisa
         </Link>
+
+        {erroInteresse && <MensagemErro texto={erroInteresse}/>}
 
         <div className="cartao cartao-perfil-visualizacao">
           <div className="cartao-perfil-cabecalho">
@@ -141,7 +150,7 @@ export default function PerfilAtletaVisualizacao() {
             </div>
             <div>
               <dt>Contato</dt>
-              <dd>{perfil.Usuario?.email}</dd>
+              <dd>{perfil.Usuario?.email || '—'}</dd>
             </div>
           </dl>
 
@@ -237,6 +246,11 @@ export default function PerfilAtletaVisualizacao() {
           margin-bottom: 24px;
         }
         .acao-interesse { margin-left: auto; }
+        @media (max-width: 560px) {
+          .cartao-perfil-cabecalho { flex-wrap: wrap; }
+          .acao-interesse { margin-left: 0; width: 100%; }
+          .lista-dados { grid-template-columns: 1fr; }
+        }
         .acoes-match { display: flex; align-items: center; gap: 10px; }
         .etiqueta-status {
           padding: 6px 12px;

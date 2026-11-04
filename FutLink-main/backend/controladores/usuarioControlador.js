@@ -1,4 +1,5 @@
 const { Usuario } = require('../modelos');
+const { ehEmailValido } = require('../utilitarios/validacao');
 const buscarMeuUsuario = async (req, res) => {
     const usuario = await Usuario.findByPk(req.usuario.id, {
         attributes: { exclude: ['senha'] },
@@ -23,11 +24,15 @@ const atualizarMeuUsuario = async (req, res) => {
         if (!usuario) {
             return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
         }
-        const { nome, email } = req.body;
+        const nome = String(req.body.nome || '').trim();
+        const email = String(req.body.email || '').trim().toLowerCase();
         const dadosParaAtualizar = {};
         if (nome)
             dadosParaAtualizar.nome = nome;
-        if (email && email !== usuario.email) {
+        if (email && !ehEmailValido(email)) {
+            return res.status(400).json({ mensagem: 'Informe um e-mail válido.' });
+        }
+        if (email && email !== String(usuario.email).toLowerCase()) {
             const emailEmUso = await Usuario.findOne({ where: { email } });
             if (emailEmUso) {
                 return res.status(400).json({ mensagem: 'Esse e-mail já está sendo usado por outra conta.' });
@@ -39,7 +44,8 @@ const atualizarMeuUsuario = async (req, res) => {
         res.json({ mensagem: 'Dados atualizados com sucesso!', usuario: dadosSemSenha });
     }
     catch (erro) {
-        res.status(500).json({ mensagem: 'Erro ao atualizar usuário.', erro: erro.message });
+      console.error(erro);
+        res.status(500).json({ mensagem: 'Erro ao atualizar usuário.' });
     }
 };
 const excluirMinhaConta = async (req, res) => {

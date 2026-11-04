@@ -1,12 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
+import { mensagemDeErro } from '../servicos/api';
 export default function Login() {
     const { entrar } = useAutenticacao();
     const navegar = useNavigate();
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
-    const [erro, setErro] = useState('');
+    // Se o token venceu, o api.js deixa um aviso para mostrarmos aqui (e já o apagamos).
+    const [erro, setErro] = useState(() => {
+        if (sessionStorage.getItem('futlink_sessao_expirada')) {
+            sessionStorage.removeItem('futlink_sessao_expirada');
+            return 'Sua sessão expirou. Entre novamente para continuar.';
+        }
+        return '';
+    });
     const [enviando, setEnviando] = useState(false);
     const aoEnviar = async (evento) => {
         evento.preventDefault();
@@ -17,7 +25,7 @@ export default function Login() {
             navegar(usuario.tipo === 'empresario' ? '/pesquisa' : '/perfil');
         }
         catch (erroRequisicao) {
-            setErro(erroRequisicao.response?.data?.mensagem || 'Não foi possível fazer login.');
+            setErro(mensagemDeErro(erroRequisicao, 'Não foi possível fazer login.'));
         }
         finally {
             setEnviando(false);
@@ -29,16 +37,16 @@ export default function Login() {
           <p className="eyebrow-auth">Bem-vindo de volta</p>
           <h2>Entrar</h2>
 
-          {erro && <div className="mensagem-erro">{erro}</div>}
+          {erro && <div className="mensagem-erro" role="alert">{erro}</div>}
 
           <div className="campo">
             <label htmlFor="email">E-mail</label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus/>
+            <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus/>
           </div>
 
           <div className="campo">
             <label htmlFor="senha">Senha</label>
-            <input id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required/>
+            <input id="senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required/>
           </div>
 
           <button className="botao botao-primario botao-bloco" disabled={enviando}>
