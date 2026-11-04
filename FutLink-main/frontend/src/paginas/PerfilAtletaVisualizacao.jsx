@@ -32,17 +32,25 @@ export default function PerfilAtletaVisualizacao() {
         buscar();
     }, [usuarioId]);
     useEffect(() => {
-        api.get(`/portfolio/usuario/${usuarioId}`).then((resposta) => setVideos(resposta.data));
+        api.get(`/portfolio/usuario/${usuarioId}`)
+            .then((resposta) => setVideos(resposta.data))
+            .catch(() => setVideos([]));
     }, [usuarioId]);
     useEffect(() => {
-        api.get(`/historico-clubes/usuario/${usuarioId}`).then((resposta) => setClubes(resposta.data));
+        api.get(`/historico-clubes/usuario/${usuarioId}`)
+            .then((resposta) => setClubes(resposta.data))
+            .catch(() => setClubes([]));
     }, [usuarioId]);
     useEffect(() => {
-        api.get(`/historico-competicoes/usuario/${usuarioId}`).then((resposta) => setCompeticoes(resposta.data));
+        api.get(`/historico-competicoes/usuario/${usuarioId}`)
+            .then((resposta) => setCompeticoes(resposta.data))
+            .catch(() => setCompeticoes([]));
     }, [usuarioId]);
     useEffect(() => {
         if (usuario.tipo !== 'empresario') return;
-        api.get(`/interesses/status/${usuarioId}`).then((resposta) => setStatusInteresse(resposta.data.status));
+        api.get(`/interesses/status/${usuarioId}`)
+            .then((resposta) => setStatusInteresse(resposta.data.status))
+            .catch(() => setStatusInteresse(null));
     }, [usuarioId, usuario.tipo]);
     const enviarInteresse = async () => {
         setEnviandoInteresse(true);
@@ -73,8 +81,6 @@ export default function PerfilAtletaVisualizacao() {
       </div>);
     }
     const nome = perfil.Usuario?.nome || 'Atleta';
-    const times = historico.filter((item) => item.tipo === 'time');
-    const competicoesHistorico = historico.filter((item) => item.tipo === 'competicao');
     return (<div className="pagina">
       <div className="container container-estreito">
         <Link to="/pesquisa" className="link-voltar">
