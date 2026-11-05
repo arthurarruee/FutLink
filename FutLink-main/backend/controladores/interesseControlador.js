@@ -1,4 +1,7 @@
-const { Usuario, PerfilAtleta, PerfilEmpresario, Interesse, Match } = require('../modelos');
+const { Usuario, PerfilAtleta, PerfilEmpresario, Interesse, Match, Verificacao } = require('../modelos');
+
+// Inclui o selo só quando a comprovação foi APROVADA (pendente/recusado não aparecem para os outros).
+const incluirSelo = { model: Verificacao, attributes: ['status'], where: { status: 'aprovado' }, required: false };
 
 const enviarInteresse = async (req, res) => {
   try {
@@ -36,7 +39,7 @@ const listarRecebidos = async (req, res) => {
 
   const interesses = await Interesse.findAll({
     where: { atletaId: req.usuario.id },
-    include: [{ model: Usuario, as: 'Empresario', attributes: ['id', 'nome', 'email'], include: [PerfilEmpresario] }],
+    include: [{ model: Usuario, as: 'Empresario', attributes: ['id', 'nome', 'email'], include: [PerfilEmpresario, incluirSelo] }],
     order: [['createdAt', 'DESC']],
   });
   res.json(interesses);

@@ -12,6 +12,9 @@ import Feed from './paginas/Feed';
 import Interesses from './paginas/Interesses';
 import Mensagens from './paginas/Mensagens';
 import NaoEncontrada from './paginas/NaoEncontrada';
+import CentralAjuda from './paginas/CentralAjuda';
+import Admin from './paginas/Admin';
+import Rodape from './componentes/Rodape';
 
 export default function App() {
     return (<BrowserRouter>
@@ -25,13 +28,13 @@ export default function App() {
           <Route path="/perfil" element={<RotaProtegida>
                 <Perfil />
               </RotaProtegida>}/>
-          <Route path="/pesquisa" element={<RotaProtegida>
+          <Route path="/pesquisa" element={<RotaProtegida tipos={['empresario']}>
                 <Pesquisa />
               </RotaProtegida>}/>
           <Route path="/atleta/:usuarioId" element={<RotaProtegida>
                 <PerfilAtletaVisualizacao />
               </RotaProtegida>}/>
-          <Route path="/feed" element={<RotaProtegida>
+          <Route path="/feed" element={<RotaProtegida tipos={['atleta']}>
                 <Feed />
               </RotaProtegida>}/>
           <Route path="/interesses" element={<RotaProtegida>
@@ -40,8 +43,13 @@ export default function App() {
           <Route path="/mensagens" element={<RotaProtegida>
                 <Mensagens />
               </RotaProtegida>}/>
+          <Route path="/ajuda" element={<CentralAjuda />}/>
+          <Route path="/admin" element={<RotaProtegida somenteAdmin>
+                <Admin />
+              </RotaProtegida>}/>
           <Route path="*" element={<NaoEncontrada />}/>
         </Routes>
+        <Rodape />
       </AutenticacaoProvedor>
     </BrowserRouter>);
 }

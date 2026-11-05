@@ -5,6 +5,8 @@ import { Carregando, MensagemErro } from '../componentes/Estados';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import HistoricoClubesSecao from '../componentes/HistoricoClubesSecao';
 import HistoricoCompeticoesSecao from '../componentes/HistoricoCompeticoesSecao';
+import SeletorFoto from '../componentes/SeletorFoto';
+import ComprovacaoProfissional from '../componentes/ComprovacaoProfissional';
 
 const CAMPOS_VAZIOS_ATLETA = {
   idade: '',
@@ -122,6 +124,10 @@ export default function Perfil() {
             ? 'Esses dados aparecem pra empresários que te encontrarem na pesquisa.'
             : 'Complete seus dados profissionais para entrar em contato com atletas.'}
         </p>
+
+        <div className="cartao cartao-foto">
+          <SeletorFoto usuario={usuario}/>
+        </div>
 
         <form className="cartao" onSubmit={aoSalvar}>
           {mensagem && <div className="mensagem-sucesso" role="status">{mensagem}</div>}
@@ -251,6 +257,7 @@ export default function Perfil() {
           </div>
         </form>
 
+        {!ehAtleta && <ComprovacaoProfissional />}
         {ehAtleta && <HistoricoClubesSecao />}
         {ehAtleta && <HistoricoCompeticoesSecao />}
 
@@ -267,19 +274,7 @@ export default function Perfil() {
       </div>
 
       <style>{`
-        .container-estreito { max-width: 640px; }
-        .subtitulo-perfil { margin-bottom: 28px; }
-        .titulo-secao {
-          font-family: var(--fonte-corpo);
-          font-size: 0.95rem;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          color: var(--verde-luz);
-          margin: 24px 0 16px 0;
-          padding-top: 20px;
-          border-top: 1px solid var(--borda-sutil);
-        }
-        .cartao > .titulo-secao:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+        .cartao-foto { margin-bottom: 20px; }
         .acoes-perfil { display: flex; gap: 12px; }
         .grade-2 {
           display: grid;

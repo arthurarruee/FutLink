@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Usuario } = require('../modelos');
 const { ehEmailValido } = require('../utilitarios/validacao');
+const { ehAdmin } = require('../utilitarios/admin');
 const gerarToken = (usuario) => {
     return jwt.sign({ id: usuario.id, tipo: usuario.tipo }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
@@ -44,6 +45,7 @@ const registrar = async (req, res) => {
                 nome: novoUsuario.nome,
                 email: novoUsuario.email,
                 tipo: novoUsuario.tipo,
+                admin: ehAdmin(novoUsuario.email),
             },
         });
     }
@@ -76,6 +78,7 @@ const login = async (req, res) => {
                 nome: usuario.nome,
                 email: usuario.email,
                 tipo: usuario.tipo,
+                admin: ehAdmin(usuario.email),
             },
         });
     }

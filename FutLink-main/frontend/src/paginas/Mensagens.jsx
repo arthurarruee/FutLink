@@ -4,6 +4,8 @@ import api, { mensagemDeErro } from '../servicos/api';
 import { Carregando, MensagemErro } from '../componentes/Estados';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { IconeOlho } from '../componentes/Icones';
+import Avatar from '../componentes/Avatar';
+import SeloVerificado from '../componentes/SeloVerificado';
 
 export default function Mensagens() {
   const { usuario } = useAutenticacao();
@@ -112,15 +114,9 @@ export default function Mensagens() {
                     className={`item-conversa ${ativo ? 'ativo' : ''}`}
                     onClick={() => abrirConversa(match)}
                   >
-                    <span className="numero-camisa">
-                      {(outraPessoa?.nome || '?')
-                        .split(' ')
-                        .slice(0, 2)
-                        .map((p) => p[0])
-                        .join('')
-                        .toUpperCase()}
-                    </span>
-                    {outraPessoa?.nome}
+                    <Avatar usuarioId={outraPessoa?.id} nome={outraPessoa?.nome || ''} tamanho={38}/>
+                    <span className="item-conversa-nome">{outraPessoa?.nome}</span>
+                    {outraPessoa?.Verificacao?.status === 'aprovado' && <SeloVerificado compacto/>}
                   </button>
                 );
               })
@@ -133,7 +129,9 @@ export default function Mensagens() {
             ) : (
               <>
                 <div className="cabecalho-chat">
+                  <Avatar usuarioId={outraPessoaSelecionada?.id} nome={outraPessoaSelecionada?.nome || ''} tamanho={36}/>
                   <span className="cabecalho-chat-nome">{outraPessoaSelecionada?.nome}</span>
+                  {outraPessoaSelecionada?.Verificacao?.status === 'aprovado' && <SeloVerificado/>}
                   {!ehAtleta && (
                     <Link
                       to={`/atleta/${outraPessoaSelecionada?.id}`}

@@ -118,8 +118,9 @@ export default function Pesquisa() {
           margin: 24px 0 32px 0;
         }
         .filtros-pesquisa .campo { margin-bottom: 0; }
-        .filtros-pesquisa .campo:first-child { grid-column: span 2; }
-        .filtros-acoes { display: flex; gap: 10px; grid-column: span 2; }
+        .filtros-pesquisa .campo:nth-child(-n+3) { grid-column: span 2; }
+        .filtros-acoes { display: flex; gap: 10px; grid-column: span 3; align-items: flex-end; }
+        .filtros-pesquisa .campo { align-self: end; }
         .contagem-resultados { font-family: var(--fonte-dados); font-size: 0.85rem; margin-bottom: 12px; }
         .lista-atletas {
           display: flex;
@@ -128,7 +129,7 @@ export default function Pesquisa() {
         }
         @media (max-width: 780px) {
           .filtros-pesquisa { grid-template-columns: 1fr 1fr; }
-          .filtros-pesquisa .campo:first-child, .filtros-acoes { grid-column: span 2; }
+          .filtros-pesquisa .campo:nth-child(-n+3), .filtros-acoes { grid-column: span 2; }
         }
       `}</style>
     </div>);

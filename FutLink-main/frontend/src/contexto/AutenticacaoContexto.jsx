@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../servicos/api';
+import { limparCacheFotos } from '../servicos/arquivos';
 const AutenticacaoContexto = createContext(null);
 export function AutenticacaoProvedor({ children }) {
     const [usuario, setUsuario] = useState(null);
@@ -42,6 +43,7 @@ export function AutenticacaoProvedor({ children }) {
     const sair = () => {
         localStorage.removeItem('futlink_token');
         localStorage.removeItem('futlink_usuario');
+        limparCacheFotos();
         setUsuario(null);
     };
     const atualizarUsuario = (dadosParciais) => {

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { mensagemDeErro } from '../servicos/api';
+import PainelAuth from '../componentes/PainelAuth';
+import { IconeBola, IconeBusca } from '../componentes/Icones';
 export default function Cadastro() {
     const { registrar } = useAutenticacao();
     const navegar = useNavigate();
@@ -27,7 +29,8 @@ export default function Cadastro() {
         }
     };
     return (<div className="pagina pagina-auth">
-      <div className="container">
+      <div className="container auth-grade">
+        <PainelAuth titulo="Crie sua conta e entre em campo" />
         <form className="cartao cartao-auth" onSubmit={aoEnviar}>
           <p className="eyebrow-auth">Comece agora</p>
           <h2>Criar conta</h2>
@@ -37,11 +40,15 @@ export default function Cadastro() {
           <div className="campo">
             <label>Eu sou</label>
             <div className="seletor-tipo">
-              <button type="button" className={`seletor-tipo-opcao ${tipo === 'atleta' ? 'ativo' : ''}`} onClick={() => setTipo('atleta')}>
-                Atleta
+              <button type="button" className={`seletor-tipo-opcao ${tipo === 'atleta' ? 'ativo' : ''}`} onClick={() => setTipo('atleta')} aria-pressed={tipo === 'atleta'}>
+                <IconeBola tamanho={22}/>
+                <strong>Atleta</strong>
+                <span>Quero ser descoberto</span>
               </button>
-              <button type="button" className={`seletor-tipo-opcao ${tipo === 'empresario' ? 'ativo' : ''}`} onClick={() => setTipo('empresario')}>
-                Empresário / Olheiro
+              <button type="button" className={`seletor-tipo-opcao ${tipo === 'empresario' ? 'ativo' : ''}`} onClick={() => setTipo('empresario')} aria-pressed={tipo === 'empresario'}>
+                <IconeBusca tamanho={22}/>
+                <strong>Empresário / Olheiro</strong>
+                <span>Quero encontrar talentos</span>
               </button>
             </div>
           </div>
@@ -73,28 +80,12 @@ export default function Cadastro() {
       </div>
 
       <style>{`
-        .seletor-tipo {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .seletor-tipo-opcao {
-          padding: 12px;
-          border-radius: 8px;
-          border: 1px solid var(--borda-sutil);
-          background-color: var(--preto-estadio);
-          color: var(--cinza-aco);
-          font-family: var(--fonte-corpo);
-          font-weight: 600;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-        .seletor-tipo-opcao.ativo {
-          border-color: var(--verde-grama);
-          background-color: rgba(63, 145, 66, 0.14);
-          color: var(--verde-luz);
-        }
+        .seletor-tipo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .seletor-tipo-opcao { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 10px; border-radius: 12px; border: 1px solid var(--borda-sutil); background-color: var(--preto-estadio); color: var(--cinza-aco); font-family: var(--fonte-corpo); cursor: pointer; transition: all .15s ease; text-align: center; }
+        .seletor-tipo-opcao strong { color: var(--branco-gelo); font-size: 0.92rem; }
+        .seletor-tipo-opcao span { font-size: 0.76rem; }
+        .seletor-tipo-opcao:hover { border-color: var(--borda-forte); }
+        .seletor-tipo-opcao.ativo { border-color: var(--verde-grama); background-color: rgba(63, 145, 66, 0.14); color: var(--verde-neon); box-shadow: 0 0 0 3px rgba(63, 145, 66, 0.18); }
       `}</style>
     </div>);
 }

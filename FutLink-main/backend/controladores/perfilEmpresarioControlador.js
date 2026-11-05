@@ -1,4 +1,4 @@
-const { Usuario, PerfilEmpresario } = require('../modelos');
+const { Usuario, PerfilEmpresario, Verificacao } = require('../modelos');
 const { limparTexto, temCampo } = require('../utilitarios/validacao');
 
 const CAMPOS_TEXTO = ['empresa', 'cargo', 'cidade', 'estado', 'biografia', 'fotoPerfil'];
@@ -78,7 +78,11 @@ const buscarMeuPerfil = async (req, res) => {
 
 const buscarPerfilCompleto = async (req, res) => {
     const perfil = await buscarPerfilDoUsuario(req.params.usuarioId, {
-        include: { model: Usuario, attributes: ['id', 'nome', 'email'] },
+        include: {
+            model: Usuario,
+            attributes: ['id', 'nome', 'email'],
+            include: [{ model: Verificacao, attributes: ['status'], where: { status: 'aprovado' }, required: false }],
+        },
     });
     if (!perfil) {
         return res.status(404).json({ mensagem: 'Perfil de empresário não encontrado.' });

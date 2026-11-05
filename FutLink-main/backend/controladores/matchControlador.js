@@ -1,4 +1,6 @@
-const { Usuario, PerfilAtleta, PerfilEmpresario, Match } = require('../modelos');
+const { Usuario, PerfilAtleta, PerfilEmpresario, Match, Verificacao } = require('../modelos');
+
+const incluirSelo = { model: Verificacao, attributes: ['status'], where: { status: 'aprovado' }, required: false };
 
 const listarMeusMatches = async (req, res) => {
   const ehAtleta = req.usuario.tipo === 'atleta';
@@ -10,7 +12,7 @@ const listarMeusMatches = async (req, res) => {
         model: Usuario,
         as: ehAtleta ? 'Empresario' : 'Atleta',
         attributes: ['id', 'nome', 'email'],
-        include: [ehAtleta ? PerfilEmpresario : PerfilAtleta],
+        include: ehAtleta ? [PerfilEmpresario, incluirSelo] : [PerfilAtleta],
       },
     ],
     order: [['createdAt', 'DESC']],

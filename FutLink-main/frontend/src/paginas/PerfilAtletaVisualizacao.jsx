@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api, { mensagemDeErro } from '../servicos/api';
 import { Carregando, MensagemErro } from '../componentes/Estados';
+import Avatar from '../componentes/Avatar';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { extrairIdYoutube } from '../servicos/youtube';
 import { IconeChat, IconeTime, IconeTaca } from '../componentes/Icones';
@@ -98,14 +99,7 @@ export default function PerfilAtletaVisualizacao() {
 
         <div className="cartao cartao-perfil-visualizacao">
           <div className="cartao-perfil-cabecalho">
-            <div className="numero-camisa numero-camisa-grande">
-              {nome
-            .split(' ')
-            .slice(0, 2)
-            .map((p) => p[0])
-            .join('')
-            .toUpperCase()}
-            </div>
+            <Avatar usuarioId={usuarioId} nome={nome} tamanho={92}/>
             <div>
               <h2>{nome}</h2>
               <p className="cartao-perfil-subtitulo">
@@ -239,6 +233,7 @@ export default function PerfilAtletaVisualizacao() {
           color: var(--cinza-aco);
         }
         .link-voltar:hover { color: var(--verde-luz); }
+        .cartao-perfil-visualizacao { padding: 28px; }
         .cartao-perfil-cabecalho {
           display: flex;
           align-items: center;

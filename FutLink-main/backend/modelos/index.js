@@ -7,6 +7,8 @@ const Match = require('./Match');
 const Mensagem = require('./Mensagem');
 const HistoricoClube = require('./HistoricoClube');
 const HistoricoCompeticao = require('./HistoricoCompeticao');
+const Arquivo = require('./Arquivo');
+const Verificacao = require('./Verificacao');
 
 Usuario.hasOne(PerfilAtleta, { foreignKey: 'usuarioId', onDelete: 'CASCADE' });
 PerfilAtleta.belongsTo(Usuario, { foreignKey: 'usuarioId' });
@@ -38,6 +40,12 @@ HistoricoClube.belongsTo(Usuario, { foreignKey: 'usuarioId' });
 Usuario.hasMany(HistoricoCompeticao, { foreignKey: 'usuarioId', onDelete: 'CASCADE' });
 HistoricoCompeticao.belongsTo(Usuario, { foreignKey: 'usuarioId' });
 
+Usuario.hasMany(Arquivo, { foreignKey: 'usuarioId', onDelete: 'CASCADE' });
+Arquivo.belongsTo(Usuario, { foreignKey: 'usuarioId' });
+
+Usuario.hasOne(Verificacao, { foreignKey: 'usuarioId', onDelete: 'CASCADE' });
+Verificacao.belongsTo(Usuario, { foreignKey: 'usuarioId' });
+
 module.exports = {
   Usuario,
   PerfilAtleta,
@@ -48,4 +56,6 @@ module.exports = {
   Mensagem,
   HistoricoClube,
   HistoricoCompeticao,
+  Arquivo,
+  Verificacao,
 };

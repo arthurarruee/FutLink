@@ -4,6 +4,8 @@ import api, { mensagemDeErro } from '../servicos/api';
 import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { IconeChat, IconeOlho } from '../componentes/Icones';
+import Avatar from '../componentes/Avatar';
+import SeloVerificado from '../componentes/SeloVerificado';
 
 const RÓTULO_STATUS = {
   pendente: 'Pendente',
@@ -97,16 +99,9 @@ export default function Interesses() {
               const podeConversar = interesse.status === 'aceito';
               return (
                 <div key={interesse.id} className="cartao cartao-interesse">
-                  <div className="numero-camisa">
-                    {(outraPessoa?.nome || '?')
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((p) => p[0])
-                      .join('')
-                      .toUpperCase()}
-                  </div>
+                  <Avatar usuarioId={outraPessoa?.id} nome={outraPessoa?.nome || ''} tamanho={52}/>
                   <div className="cartao-interesse-info">
-                    <h3>{outraPessoa?.nome}</h3>
+                    <h3>{outraPessoa?.nome} {outraPessoa?.Verificacao?.status === 'aprovado' && <SeloVerificado/>}</h3>
                     <p>{posicaoOuCargo}</p>
                   </div>
 

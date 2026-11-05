@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { mensagemDeErro } from '../servicos/api';
+import PainelAuth from '../componentes/PainelAuth';
 export default function Login() {
     const { entrar } = useAutenticacao();
     const navegar = useNavigate();
@@ -32,7 +33,8 @@ export default function Login() {
         }
     };
     return (<div className="pagina pagina-auth">
-      <div className="container">
+      <div className="container auth-grade">
+        <PainelAuth titulo="Bem-vindo de volta ao jogo" />
         <form className="cartao cartao-auth" onSubmit={aoEnviar}>
           <p className="eyebrow-auth">Bem-vindo de volta</p>
           <h2>Entrar</h2>
@@ -60,24 +62,6 @@ export default function Login() {
       </div>
 
       <style>{`
-        .pagina-auth {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .cartao-auth {
-          width: 100%;
-          max-width: 400px;
-          margin: 0 auto;
-        }
-        .eyebrow-auth {
-          font-family: var(--fonte-dados);
-          font-size: 0.78rem;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          color: var(--verde-luz);
-          margin-bottom: 4px;
-        }
         .cartao-auth h2 {
           margin-bottom: 24px;
         }

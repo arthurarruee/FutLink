@@ -11,6 +11,8 @@ const portfolioRotas = require('./rotas/portfolioRotas');
 const interesseRotas = require('./rotas/interesseRotas');
 const matchRotas = require('./rotas/matchRotas');
 const mensagemRotas = require('./rotas/mensagemRotas');
+const arquivoRotas = require('./rotas/arquivoRotas');
+const adminRotas = require('./rotas/adminRotas');
 const historicoClubeRotas = require('./rotas/historicoClubeRotas');
 const historicoCompeticaoRotas = require('./rotas/historicoCompeticaoRotas');
 
@@ -32,6 +34,18 @@ const origensPermitidas = (process.env.FRONTEND_URL || '')
     .map((origem) => origem.trim().replace(/\/$/, ''))
     .filter(Boolean);
 app.use(cors(origensPermitidas.length ? { origin: origensPermitidas } : undefined));
+// Cabeçalhos básicos de segurança em todas as respostas.
+app.use((req, res, next) => {
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('X-Frame-Options', 'DENY');
+    res.set('Referrer-Policy', 'no-referrer');
+    next();
+});
+
+// Uploads (foto e documento) chegam em base64, então precisam de um limite maior.
+// Esta linha vem ANTES do parser global de 100kb, senão ele recusaria os arquivos.
+app.use('/api/arquivos', express.json({ limit: '8mb' }), protegerRotas(arquivoRotas));
+// Todas as outras rotas continuam com limite pequeno (100kb).
 app.use(express.json({ limit: '100kb' }));
 
 app.get('/', (req, res) => {
@@ -50,6 +64,7 @@ app.use('/api/portfolio', protegerRotas(portfolioRotas));
 app.use('/api/interesses', protegerRotas(interesseRotas));
 app.use('/api/matches', protegerRotas(matchRotas));
 app.use('/api/mensagens', protegerRotas(mensagemRotas));
+app.use('/api/admin', protegerRotas(adminRotas));
 app.use('/api/historico-clubes', protegerRotas(historicoClubeRotas));
 app.use('/api/historico-competicoes', protegerRotas(historicoCompeticaoRotas));
 

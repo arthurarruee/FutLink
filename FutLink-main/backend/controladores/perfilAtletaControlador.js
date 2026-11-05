@@ -106,6 +106,10 @@ const buscarPerfilCompleto = async (req, res) => {
 };
 
 const listarAtletas = async (req, res) => {
+    // A pesquisa de atletas é uma ferramenta do empresário/olheiro.
+    if (req.usuario.tipo !== 'empresario') {
+        return res.status(403).json({ mensagem: 'Só empresários podem pesquisar atletas.' });
+    }
     try {
         const { nome, posicao, cidade, estado, idadeMin, idadeMax } = req.query;
         const filtroPerfil = {};
