@@ -6,6 +6,7 @@ import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import HistoricoClubesSecao from '../componentes/HistoricoClubesSecao';
 import HistoricoCompeticoesSecao from '../componentes/HistoricoCompeticoesSecao';
 import SeletorFoto from '../componentes/SeletorFoto';
+import { POSICOES } from '../constantes/posicoes';
 import ComprovacaoProfissional from '../componentes/ComprovacaoProfissional';
 
 const CAMPOS_VAZIOS_ATLETA = {
@@ -171,12 +172,7 @@ export default function Perfil() {
                   <label htmlFor="posicao">Posição</label>
                   <select id="posicao" value={dados.posicao || ''} onChange={(e) => aoMudarCampo('posicao', e.target.value)}>
                     <option value="">Selecione</option>
-                    <option>Goleiro</option>
-                    <option>Zagueiro</option>
-                    <option>Lateral</option>
-                    <option>Volante</option>
-                    <option>Meio-campo</option>
-                    <option>Atacante</option>
+                    {POSICOES.map((posicao) => (<option key={posicao}>{posicao}</option>))}
                   </select>
                 </div>
               </div>

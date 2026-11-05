@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api, { mensagemDeErro } from '../servicos/api';
 import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
@@ -6,6 +6,7 @@ import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { IconeChat, IconeOlho } from '../componentes/Icones';
 import Avatar from '../componentes/Avatar';
 import SeloVerificado from '../componentes/SeloVerificado';
+import { POSICOES, STATUS_INTERESSE, validarFaixaDeIdade } from '../constantes/posicoes';
 
 const RÓTULO_STATUS = {
   pendente: 'Pendente',
@@ -13,7 +14,7 @@ const RÓTULO_STATUS = {
   recusado: 'Recusado',
 };
 
-const POSICOES = ['Goleiro', 'Zagueiro', 'Lateral', 'Volante', 'Meio-campo', 'Atacante'];
+const FILTROS_VAZIOS = { posicao: '', cidade: '', idadeMin: '', idadeMax: '', status: '' };
 
 export default function Interesses() {
   const { usuario } = useAutenticacao();
@@ -22,27 +23,64 @@ export default function Interesses() {
   const [interesses, setInteresses] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
-  const [categoria, setCategoria] = useState('');
   const [erro, setErro] = useState('');
 
-  const carregar = async () => {
+  // "filtros" = o que está digitado nos campos. "aplicados" = o que foi enviado ao servidor.
+  // Campos de texto esperam 0,4 s depois da última tecla (para não consultar a cada letra).
+  const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
+  const [aplicados, setAplicados] = useState(FILTROS_VAZIOS);
+  const temporizador = useRef(null);
+  const ultimoPedido = useRef(0); // evita que uma resposta antiga sobrescreva uma mais nova
+
+  const erroFaixaIdade = validarFaixaDeIdade(filtros.idadeMin, filtros.idadeMax);
+  const filtrosAtivos = Object.values(filtros).some((valor) => valor !== '');
+
+  const alterarFiltro = (campo, valor, imediato = false) => {
+    const novos = { ...filtros, [campo]: valor };
+    setFiltros(novos);
+    clearTimeout(temporizador.current);
+    if (imediato) setAplicados(novos);
+    else temporizador.current = setTimeout(() => setAplicados(novos), 400);
+  };
+
+  const limparFiltros = () => {
+    clearTimeout(temporizador.current);
+    setFiltros(FILTROS_VAZIOS);
+    setAplicados(FILTROS_VAZIOS);
+  };
+
+  useEffect(() => () => clearTimeout(temporizador.current), []);
+
+  const carregar = useCallback(async () => {
+    // Faixa de idade inválida (ex.: 20 a 10): não consulta; o aviso aparece abaixo dos campos.
+    if (validarFaixaDeIdade(aplicados.idadeMin, aplicados.idadeMax)) return;
+    const pedido = ++ultimoPedido.current;
     setCarregando(true);
     setErro('');
     try {
+      // Só enviamos os filtros preenchidos. O filtro de verdade acontece no servidor (backend).
+      // Atletas só têm o filtro de status; posição/cidade/idade valem para os atletas listados ao empresário.
+      const camposDoTipo = ehAtleta ? ['status'] : Object.keys(FILTROS_VAZIOS);
+      const params = {};
+      camposDoTipo.forEach((campo) => {
+        const valor = String(aplicados[campo]).trim();
+        if (valor) params[campo] = valor;
+      });
       const rota = ehAtleta ? '/interesses/recebidos' : '/interesses/enviados';
-      const resposta = await api.get(rota);
+      const resposta = await api.get(rota, { params });
+      if (pedido !== ultimoPedido.current) return;
       setInteresses(resposta.data);
     } catch (erroRequisicao) {
+      if (pedido !== ultimoPedido.current) return;
       setErro(mensagemDeErro(erroRequisicao, 'Não foi possível carregar seus interesses.'));
     } finally {
-      setCarregando(false);
+      if (pedido === ultimoPedido.current) setCarregando(false);
     }
-  };
+  }, [aplicados, ehAtleta]);
 
   useEffect(() => {
     carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [carregar]);
 
   const responder = async (id, decisao) => {
     setMensagem('');
@@ -55,47 +93,69 @@ export default function Interesses() {
     }
   };
 
-  // Empresários enxergam a posição de cada atleta em quem demonstraram interesse.
-  // A categoria escolhida não filtra a lista, só traz esses atletas pra frente — os demais continuam aparecendo.
-  const interessesOrdenados = useMemo(() => {
-    if (ehAtleta || !categoria) return interesses;
-    const combina = (item) => (item.Atleta?.PerfilAtleta?.posicao || '') === categoria;
-    return [...interesses].sort((a, b) => Number(combina(b)) - Number(combina(a)));
-  }, [interesses, categoria, ehAtleta]);
-
   return (
     <div className="pagina">
-      <div className="container container-estreito">
+      <div className="container container-medio">
         <p className="eyebrow-auth">{ehAtleta ? 'Quem quer falar com você' : 'Seus interesses enviados'}</p>
         <h2>Interesses</h2>
 
-        {!ehAtleta && (
-          <div className="filtro-categoria">
-            <label htmlFor="categoria">Categoria</label>
-            <select id="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-              <option value="">Todas as posições</option>
-              {POSICOES.map((posicao) => (
-                <option key={posicao} value={posicao}>
-                  {posicao}
-                </option>
-              ))}
+        <form className={`cartao filtros-interesses ${ehAtleta ? 'so-status' : ''}`} onSubmit={(e) => e.preventDefault()} aria-label="Filtros de interesses">
+          {!ehAtleta && (
+            <>
+              <div className="campo">
+                <label htmlFor="filtro-posicao">Posição</label>
+                <select id="filtro-posicao" value={filtros.posicao} onChange={(e) => alterarFiltro('posicao', e.target.value, true)}>
+                  <option value="">Todas</option>
+                  {POSICOES.map((posicao) => (<option key={posicao} value={posicao}>{posicao}</option>))}
+                </select>
+              </div>
+              <div className="campo">
+                <label htmlFor="filtro-cidade">Cidade</label>
+                <input id="filtro-cidade" placeholder="ex: Porto Alegre" value={filtros.cidade} onChange={(e) => alterarFiltro('cidade', e.target.value)}/>
+              </div>
+              <div className="campo">
+                <label htmlFor="filtro-idade-min">Idade mín.</label>
+                <input id="filtro-idade-min" type="number" min="0" max="100" inputMode="numeric" value={filtros.idadeMin} onChange={(e) => alterarFiltro('idadeMin', e.target.value)}/>
+              </div>
+              <div className="campo">
+                <label htmlFor="filtro-idade-max">Idade máx.</label>
+                <input id="filtro-idade-max" type="number" min="0" max="100" inputMode="numeric" value={filtros.idadeMax} onChange={(e) => alterarFiltro('idadeMax', e.target.value)}/>
+              </div>
+            </>
+          )}
+          <div className="campo">
+            <label htmlFor="filtro-status">Situação</label>
+            <select id="filtro-status" value={filtros.status} onChange={(e) => alterarFiltro('status', e.target.value, true)}>
+              <option value="">Todas</option>
+              {STATUS_INTERESSE.map(({ valor, rotulo }) => (<option key={valor} value={valor}>{rotulo}</option>))}
             </select>
-            {categoria && <span className="dica-categoria">Atletas de "{categoria}" aparecem primeiro na lista.</span>}
           </div>
-        )}
+          <div className="filtros-acoes">
+            <button type="button" className="botao botao-secundario" onClick={limparFiltros} disabled={!filtrosAtivos}>Limpar filtros</button>
+          </div>
+          {erroFaixaIdade && <p className="filtros-aviso" role="alert">{erroFaixaIdade}</p>}
+        </form>
 
         {mensagem && <div className="mensagem-sucesso" role="status">{mensagem}</div>}
         <MensagemErro texto={erro} aoTentarNovamente={carregar}/>
 
-        {carregando ? (
+        {carregando && interesses.length === 0 ? (
           <Carregando texto="Carregando interesses..."/>
-        ) : interessesOrdenados.length === 0 && !erro ? (
+        ) : interesses.length === 0 && !erro && filtrosAtivos ? (
+          <EstadoVazio titulo="Nenhum interesse encontrado" texto="Nenhum interesse corresponde aos filtros selecionados. Tente remover algum filtro.">
+            <div className="estado-acoes"><button type="button" className="botao botao-secundario" onClick={limparFiltros}>Limpar filtros</button></div>
+          </EstadoVazio>
+        ) : interesses.length === 0 && !erro ? (
           <EstadoVazio titulo={ehAtleta ? 'Nenhum interesse recebido ainda' : 'Nenhum interesse enviado'} texto={ehAtleta ? 'Complete seu perfil e adicione vídeos para ser encontrado por empresários.' : 'Pesquise atletas e envie interesse pelo perfil deles.'}/>
-        ) : (
-          <div className="lista-interesses">
-            {interessesOrdenados.map((interesse) => {
+        ) : (<>
+          {!erro && <p className="contagem-resultados">{interesses.length} {interesses.length === 1 ? 'interesse encontrado' : 'interesses encontrados'}</p>}
+          <div className={`lista-interesses ${carregando ? 'atualizando' : ''}`} aria-busy={carregando}>
+            {interesses.map((interesse) => {
               const outraPessoa = ehAtleta ? interesse.Empresario : interesse.Atleta;
-              const posicaoOuCargo = outraPessoa?.PerfilEmpresario?.empresa || outraPessoa?.PerfilAtleta?.posicao || '';
+              const perfilAtleta = outraPessoa?.PerfilAtleta;
+              const posicaoOuCargo = ehAtleta
+                ? outraPessoa?.PerfilEmpresario?.empresa || ''
+                : [perfilAtleta?.posicao, perfilAtleta?.cidade ? `${perfilAtleta.cidade}${perfilAtleta.estado ? '/' + perfilAtleta.estado : ''}` : '', perfilAtleta?.idade ? `${perfilAtleta.idade} anos` : ''].filter(Boolean).join(' · ');
               const podeConversar = interesse.status === 'aceito';
               return (
                 <div key={interesse.id} className="cartao cartao-interesse">
@@ -146,34 +206,27 @@ export default function Interesses() {
               );
             })}
           </div>
-        )}
+        </>)}
       </div>
 
       <style>{`
-        .filtro-categoria {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin: 20px 0 24px 0;
-          flex-wrap: wrap;
+        .filtros-interesses { display: grid; grid-template-columns: 1.1fr 1.4fr 0.8fr 0.8fr 1fr auto; gap: 14px; align-items: end; margin: 24px 0 24px 0; }
+        .filtros-interesses.so-status { grid-template-columns: minmax(180px, 280px) auto; }
+        .filtros-interesses .campo { margin-bottom: 0; }
+        .filtros-interesses .filtros-acoes { display: flex; }
+        .filtros-aviso { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: #ff9a9d; }
+        .contagem-resultados { font-family: var(--fonte-dados); font-size: 0.85rem; margin-bottom: 12px; }
+        @media (max-width: 560px) {
+          .cartao-interesse { flex-wrap: wrap; }
+          .cartao-interesse-info { flex-basis: calc(100% - 76px); min-width: 0; }
+          .cartao-interesse-icones, .cartao-interesse-acoes, .etiqueta-status { margin-left: 68px; }
         }
-        .filtro-categoria label {
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: var(--cinza-aco);
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
+        .lista-interesses.atualizando { opacity: 0.55; transition: opacity 0.15s ease; pointer-events: none; }
+        @media (max-width: 860px) {
+          .filtros-interesses { grid-template-columns: 1fr 1fr; }
+          .filtros-interesses .filtros-acoes { grid-column: 1 / -1; }
+          .filtros-interesses .filtros-acoes .botao { width: 100%; }
         }
-        .filtro-categoria select {
-          background-color: var(--preto-cartao);
-          border: 1px solid var(--borda-sutil);
-          border-radius: 8px;
-          padding: 10px 14px;
-          color: var(--branco-gelo);
-          font-family: var(--fonte-corpo);
-          font-size: 0.95rem;
-        }
-        .dica-categoria { font-size: 0.82rem; color: var(--verde-luz); }
         .lista-interesses { display: flex; flex-direction: column; gap: 12px; }
         .cartao-interesse { display: flex; align-items: center; gap: 16px; }
         .cartao-interesse-info { flex: 1; }

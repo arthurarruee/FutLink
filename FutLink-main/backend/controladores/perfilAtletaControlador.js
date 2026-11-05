@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const { Usuario, PerfilAtleta } = require('../modelos');
 const { limparTexto, temCampo } = require('../utilitarios/validacao');
+const { lerFiltrosAtleta, filtrosParaWhere, posicaoCanonica, escaparLike } = require('../utilitarios/filtrosAtleta');
 
 const PES_VALIDOS = ['Direito', 'Esquerdo', 'Ambidestro'];
 const CAMPOS_TEXTO = ['posicao', 'clubeAtual', 'cidade', 'estado', 'biografia', 'fotoPerfil'];
@@ -12,6 +13,8 @@ const montarDadosPerfil = (corpo) => {
     for (const campo of CAMPOS_TEXTO) {
         if (temCampo(corpo, campo)) dados[campo] = limparTexto(corpo[campo]);
     }
+    // "Meia" / "meio campo" passam a ser guardados como "Meio-campo", igual às opções da tela.
+    if (dados.posicao) dados.posicao = posicaoCanonica(dados.posicao);
     if (temCampo(corpo, 'pePreferido')) dados.pePreferido = limparTexto(corpo.pePreferido);
     if (temCampo(corpo, 'idade')) {
         const idade = limparTexto(corpo.idade);
@@ -111,24 +114,17 @@ const listarAtletas = async (req, res) => {
         return res.status(403).json({ mensagem: 'Só empresários podem pesquisar atletas.' });
     }
     try {
-        const { nome, posicao, cidade, estado, idadeMin, idadeMax } = req.query;
-        const filtroPerfil = {};
-        if (posicao)
-            filtroPerfil.posicao = posicao;
-        if (cidade)
-            filtroPerfil.cidade = { [Op.like]: `%${cidade}%` };
-        if (estado)
-            filtroPerfil.estado = String(estado).toUpperCase();
-        if (idadeMin || idadeMax) {
-            filtroPerfil.idade = {};
-            if (idadeMin && !Number.isNaN(Number(idadeMin)))
-                filtroPerfil.idade[Op.gte] = Number(idadeMin);
-            if (idadeMax && !Number.isNaN(Number(idadeMax)))
-                filtroPerfil.idade[Op.lte] = Number(idadeMax);
+        // Posição, cidade, estado e idade são lidos/validados em um só lugar (utilitarios/filtrosAtleta.js)
+        // e funcionam sozinhos ou combinados (todos os filtros informados precisam ser atendidos).
+        const { filtros, erro } = lerFiltrosAtleta(req.query);
+        if (erro) {
+            return res.status(400).json({ mensagem: erro });
         }
+        const { nome } = req.query;
+        const filtroPerfil = filtrosParaWhere(filtros);
         const filtroUsuario = { tipo: 'atleta' };
         if (nome)
-            filtroUsuario.nome = { [Op.like]: `%${nome}%` };
+            filtroUsuario.nome = { [Op.like]: `%${escaparLike(nome)}%` };
         const atletas = await PerfilAtleta.findAll({
             where: filtroPerfil,
             include: {

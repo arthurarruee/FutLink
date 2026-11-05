@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api, { mensagemDeErro } from '../servicos/api';
 import { Carregando, MensagemErro } from '../componentes/Estados';
@@ -17,6 +17,8 @@ export default function PerfilAtletaVisualizacao() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState('');
     const [erroInteresse, setErroInteresse] = useState('');
+    const [sucessoInteresse, setSucessoInteresse] = useState('');
+    const envioEmAndamento = useRef(false); // trava contra cliques repetidos antes do React atualizar o botão
     const [statusInteresse, setStatusInteresse] = useState(null);
     const [enviandoInteresse, setEnviandoInteresse] = useState(false);
     useEffect(() => {
@@ -57,17 +59,40 @@ export default function PerfilAtletaVisualizacao() {
             .then((resposta) => setStatusInteresse(resposta.data.status))
             .catch(() => setStatusInteresse(null));
     }, [usuarioId, usuario.tipo]);
+    // Falhas de rede/servidor (sem resposta ou erro 5xx) costumam ser momentâneas, por exemplo quando a
+    // conexão com o banco estava "dormindo". Como o servidor NÃO duplica interesses, é seguro tentar de novo
+    // uma vez automaticamente. Assim a pessoa não precisa clicar duas vezes.
+    const postarInteresse = async () => {
+        try {
+            return { resposta: await api.post('/interesses', { atletaId: usuarioId }), repetiu: false };
+        }
+        catch (erroRequisicao) {
+            const momentaneo = !erroRequisicao.response || erroRequisicao.response.status >= 500;
+            if (!momentaneo)
+                throw erroRequisicao;
+            await new Promise((resolver) => setTimeout(resolver, 1500));
+            return { resposta: await api.post('/interesses', { atletaId: usuarioId }), repetiu: true };
+        }
+    };
     const enviarInteresse = async () => {
+        if (envioEmAndamento.current)
+            return;
+        envioEmAndamento.current = true;
         setErroInteresse('');
+        setSucessoInteresse('');
         setEnviandoInteresse(true);
         try {
-            await api.post('/interesses', { atletaId: usuarioId });
-            setStatusInteresse('pendente');
+            const { resposta, repetiu } = await postarInteresse();
+            // O servidor devolve o status real (pendente/aceito/recusado); usamos esse valor na tela.
+            setStatusInteresse(resposta.data.status || 'pendente');
+            // Se foi a nossa 2ª tentativa automática e o servidor diz "já existe", o interesse é o que acabamos de enviar.
+            setSucessoInteresse(resposta.data.jaEnviado && !repetiu ? resposta.data.mensagem : 'Interesse enviado com sucesso!');
         }
         catch (erroRequisicao) {
             setErroInteresse(mensagemDeErro(erroRequisicao, 'Não foi possível enviar interesse.'));
         }
         finally {
+            envioEmAndamento.current = false;
             setEnviandoInteresse(false);
         }
     };
@@ -96,6 +121,7 @@ export default function PerfilAtletaVisualizacao() {
         </Link>
 
         {erroInteresse && <MensagemErro texto={erroInteresse}/>}
+        {sucessoInteresse && <div className="mensagem-sucesso" role="status">{sucessoInteresse}</div>}
 
         <div className="cartao cartao-perfil-visualizacao">
           <div className="cartao-perfil-cabecalho">

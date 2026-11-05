@@ -58,7 +58,6 @@ export default function Rodape() {
 
         <div className="rodape-base">
           <span>© {ano} FutLink. Todos os direitos reservados.</span>
-          <span>Projeto de TCC — Matheus, Arthur e Kauahn.</span>
         </div>
       </div>
 
