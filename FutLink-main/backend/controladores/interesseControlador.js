@@ -86,6 +86,28 @@ const listarRecebidos = async (req, res) => {
   res.json(interesses);
 };
 
+// Busca o PERFIL de cada atleta com a mesma consulta usada na Pesquisa de atletas (PerfilAtleta.findAll)
+// e anexa em Atleta.PerfilAtleta. Assim o card de Interesses recebe exatamente os mesmos dados do card da
+// Pesquisa (posição, idade, pé, cidade, estado, clube) e os filtros usam esses mesmos valores.
+// Se existir mais de um perfil para o mesmo atleta (cadastros antigos), vale o mais recente.
+const anexarPerfisDosAtletas = async (interesses) => {
+  const ids = [...new Set(interesses.map((interesse) => interesse.atletaId))];
+  const perfis = ids.length
+    ? await PerfilAtleta.findAll({ where: { usuarioId: ids }, order: [['id', 'DESC']] })
+    : [];
+  const perfilPorAtleta = new Map();
+  perfis.forEach((perfil) => {
+    if (!perfilPorAtleta.has(perfil.usuarioId)) perfilPorAtleta.set(perfil.usuarioId, perfil);
+  });
+
+  return interesses.map((interesse) => {
+    const dados = typeof interesse.toJSON === 'function' ? interesse.toJSON() : { ...interesse };
+    const perfil = perfilPorAtleta.get(interesse.atletaId);
+    dados.Atleta = { ...(dados.Atleta || {}), PerfilAtleta: perfil ? (perfil.toJSON ? perfil.toJSON() : perfil) : null };
+    return dados;
+  });
+};
+
 // LISTA DE INTERESSES ENVIADOS (empresário) — aceita filtros pela URL, todos opcionais e combináveis:
 //   ?status=pendente|aceito|recusado  &posicao=Goleiro  &cidade=Porto  &estado=RS  &idadeMin=15  &idadeMax=18
 // Os filtros de posição/cidade/idade usam o perfil do atleta; o de status usa o próprio interesse.
@@ -101,11 +123,12 @@ const listarEnviados = async (req, res) => {
 
   const interesses = await Interesse.findAll({
     where: { empresarioId: req.usuario.id, ...(status ? { status } : {}) },
-    include: [{ model: Usuario, as: 'Atleta', attributes: ['id', 'nome', 'email'], include: [PerfilAtleta] }],
+    include: [{ model: Usuario, as: 'Atleta', attributes: ['id', 'nome', 'email'] }],
     order: [['createdAt', 'DESC']],
   });
 
-  res.json(interesses.filter((interesse) => perfilCombinaComFiltros(interesse.Atleta?.PerfilAtleta, filtros)));
+  const completos = await anexarPerfisDosAtletas(interesses);
+  res.json(completos.filter((interesse) => perfilCombinaComFiltros(interesse.Atleta.PerfilAtleta, filtros)));
 };
 
 const aceitarInteresse = async (req, res) => {

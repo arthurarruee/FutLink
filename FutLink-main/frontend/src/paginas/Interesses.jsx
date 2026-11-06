@@ -6,6 +6,7 @@ import { useAutenticacao } from '../contexto/AutenticacaoContexto';
 import { IconeChat, IconeOlho } from '../componentes/Icones';
 import Avatar from '../componentes/Avatar';
 import SeloVerificado from '../componentes/SeloVerificado';
+import ResumoAtleta from '../componentes/ResumoAtleta';
 import { POSICOES, STATUS_INTERESSE, validarFaixaDeIdade } from '../constantes/posicoes';
 
 const RÓTULO_STATUS = {
@@ -152,17 +153,14 @@ export default function Interesses() {
           <div className={`lista-interesses ${carregando ? 'atualizando' : ''}`} aria-busy={carregando}>
             {interesses.map((interesse) => {
               const outraPessoa = ehAtleta ? interesse.Empresario : interesse.Atleta;
-              const perfilAtleta = outraPessoa?.PerfilAtleta;
-              const posicaoOuCargo = ehAtleta
-                ? outraPessoa?.PerfilEmpresario?.empresa || ''
-                : [perfilAtleta?.posicao, perfilAtleta?.cidade ? `${perfilAtleta.cidade}${perfilAtleta.estado ? '/' + perfilAtleta.estado : ''}` : '', perfilAtleta?.idade ? `${perfilAtleta.idade} anos` : ''].filter(Boolean).join(' · ');
+              const empresa = outraPessoa?.PerfilEmpresario?.empresa || '';
               const podeConversar = interesse.status === 'aceito';
               return (
                 <div key={interesse.id} className="cartao cartao-interesse">
-                  <Avatar usuarioId={outraPessoa?.id} nome={outraPessoa?.nome || ''} tamanho={52}/>
+                  <Avatar usuarioId={outraPessoa?.id} nome={outraPessoa?.nome || ''} tamanho={64}/>
                   <div className="cartao-interesse-info">
                     <h3>{outraPessoa?.nome} {outraPessoa?.Verificacao?.status === 'aprovado' && <SeloVerificado/>}</h3>
-                    <p>{posicaoOuCargo}</p>
+                    {ehAtleta ? <p className="linha-empresa">{empresa}</p> : <ResumoAtleta perfil={outraPessoa?.PerfilAtleta}/>}
                   </div>
 
                   <div className="cartao-interesse-icones">
@@ -216,11 +214,6 @@ export default function Interesses() {
         .filtros-interesses .filtros-acoes { display: flex; }
         .filtros-aviso { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: #ff9a9d; }
         .contagem-resultados { font-family: var(--fonte-dados); font-size: 0.85rem; margin-bottom: 12px; }
-        @media (max-width: 560px) {
-          .cartao-interesse { flex-wrap: wrap; }
-          .cartao-interesse-info { flex-basis: calc(100% - 76px); min-width: 0; }
-          .cartao-interesse-icones, .cartao-interesse-acoes, .etiqueta-status { margin-left: 68px; }
-        }
         .lista-interesses.atualizando { opacity: 0.55; transition: opacity 0.15s ease; pointer-events: none; }
         @media (max-width: 860px) {
           .filtros-interesses { grid-template-columns: 1fr 1fr; }
@@ -230,8 +223,9 @@ export default function Interesses() {
         .lista-interesses { display: flex; flex-direction: column; gap: 12px; }
         .cartao-interesse { display: flex; align-items: center; gap: 16px; }
         .cartao-interesse-info { flex: 1; }
-        .cartao-interesse-info h3 { margin: 0 0 4px 0; font-size: 1rem; color: var(--branco-gelo); }
-        .cartao-interesse-info p { margin: 0; font-family: var(--fonte-dados); font-size: 0.82rem; color: var(--verde-luz); }
+        .cartao-interesse-info { min-width: 0; }
+        .cartao-interesse-info h3 { font-family: var(--fonte-corpo); font-weight: 700; font-size: 1.1rem; margin: 0 0 8px 0; color: var(--branco-gelo); }
+        .cartao-interesse-info .linha-empresa { margin: 0; font-family: var(--fonte-dados); font-size: 0.82rem; color: var(--verde-luz); }
         .cartao-interesse-icones { display: flex; gap: 8px; }
         .botao-icone {
           display: inline-flex;
@@ -255,6 +249,12 @@ export default function Interesses() {
         .etiqueta-pendente { background: rgba(143,209,158,0.12); color: var(--verde-luz); }
         .etiqueta-aceito { background: rgba(63,145,66,0.18); color: var(--verde-luz); }
         .etiqueta-recusado { background: rgba(229,72,77,0.12); color: #ff9a9d; }
+        /* Fica por último para vencer as regras acima no celular */
+        @media (max-width: 560px) {
+          .cartao-interesse { flex-wrap: wrap; }
+          .cartao-interesse-info { flex: 0 0 calc(100% - 84px); min-width: 0; }
+          .cartao-interesse-icones, .cartao-interesse-acoes, .etiqueta-status { margin-left: 80px; }
+        }
       `}</style>
     </div>
   );
